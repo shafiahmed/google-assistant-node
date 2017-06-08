@@ -64,26 +64,32 @@ class GoogleAssistant extends events.EventEmitter {
     ); 
   } 
 
-  public converse(callback: () => void) { 
+  public converse() { 
     if(this.conversationState != null) {
       this.converseConfig.setConverseState(this.conversationState);
       this.conversationState = null; 
     } 
 
-    var request = new messages.ConverseRequest(); 
+    let request = new messages.ConverseRequest(); 
     request.setConfig(this.converseConfig); 
-    var meta = new grpc.Metadata();
+    this.channel = this.service.converse(
+      new grpc.Metadata(), request
+    );
 
-    this.channel = this.service.converse(meta, request);
-    this.channel.on('data', this._handleResponse)
-    this.channel.on('data', this._handleConversationState)
+    // Setup event listeners
+    this.channel.on('data', this._handleResponse);
+    this.channel.on('data', this._handleConversationState);
+    this.channel.on('end', this._handleConversationEnd);
+
+    // Write first ConverseRequest
     this.channel.write(request)
-
-    this.converter.pipe(this.channel);
     this.state = State.IN_PROGRESS;
 
+    // Setup conversion stream
+    this.converter.pipe(this.channel);
+
     // Signal that assistant is ready
-    callback();
+    this.emit('ready');
   }
 
   public write(data: Buffer | Array<number>) {
@@ -139,6 +145,10 @@ class GoogleAssistant extends events.EventEmitter {
       convState.setConversationState(response.getResult().getConversationState());
       this.conversationState = convState;
     }
+  }
+
+  public _handleConversationEnd(error?: Error) {
+    this.emit('end', error);
   }
 }
 
