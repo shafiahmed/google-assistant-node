@@ -12,7 +12,7 @@ npm install google-assistant-node
 ```js
 let GoogleAssistant = require('google-assistant-node');
 let constants = GoogleAssistant.Constants;
-let encodings = constants.Encodings;
+let encodings = constants.Encoding;
 
 let assistant = new GoogleAssistant({
   input: {
