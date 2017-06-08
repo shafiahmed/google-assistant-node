@@ -1,46 +1,22 @@
+import * as events from "events";
 import * as stream from "stream";
-import { State, Event } from "./constants";
+import { State, Event, API } from "./constants";
 import { AudioInOptions , AudioOutOptions }  from "./options";
+import  AudioConverter from "./audio-converter";
 import { 
-  ConverseConfig, AudioInConfig, 
-  AudioOutConfig, AssistantConfig } from "./config";
+  ConverseConfig, AudioInConfig, AudioOutConfig, AssistantConfig 
+} from "./config";
 
 let grpc = require('grpc');
 let through2 = require('through2');
 let messages = require('./googleapis/google/assistant/embedded/v1alpha1/embedded_assistant_pb');
 let services = require('./googleapis/google/assistant/embedded/v1alpha1/embedded_assistant_grpc_pb');
 
-// Impl
-class GoogleAssistantLogger {
-  parseResponse(response: any) {
-    if(response.hasResult()) {
-      var result = response.getResult();
-      console.log('Response: ');
-
-      if(result.getMicrophoneMode()) {
-        console.log("\tMicrophone Mode: ", result.getMicrophoneMode());
-      }
-
-      if(result.getConversationState()) {
-        console.log("\tState: ");
-      }
-
-      if(result.getSpokenResponseText()) {
-        console.log("\tResponse Text: ", response.getSpokenResponseText());
-      }
-
-      if(result.getSpokenRequestText()) {
-        console.log("\tRequest Text: ", result.getSpokenRequestText());
-      }
-    }
-  }
-}
-
-class GoogleAssistant {
-  static ENDPOINT = 'embeddedassistant.googleapis.com'
-
+class GoogleAssistant extends events.EventEmitter {
   private state: State
   private service: any   // gRPC Service
+  private channel: any   // gRPC Duplex Channel
+  private converter: AudioConverter;
   private converseConfig: ConverseConfig
   private conversationState: Array<number> | null
 
@@ -48,6 +24,8 @@ class GoogleAssistant {
   private audioOutConfig: AudioOutConfig;
 
   constructor(config: AssistantConfig) {
+    super();
+    this.converter = new AudioConverter();
     this.converseConfig = new messages.ConverseConfig();
     this.audioInConfig = new messages.AudioInConfig();
     this.audioOutConfig = new messages.AudioOutConfig();
@@ -74,19 +52,19 @@ class GoogleAssistant {
   }
   
   public authenticate(authClient: any) {
-    let ssl_creds = grpc.credentials.createSsl();
-    let call_creds = grpc.credentials.createFromGoogleCredential(authClient);
+    let ssl_creds = grpc.credentials.createSsl(); 
+    let call_creds = grpc.credentials.createFromGoogleCredential(authClient); 
     let combined_creds = grpc.credentials.combineChannelCredentials(
       ssl_creds, 
       call_creds
     );
     this.service = new services.EmbeddedAssistantClient(
-      GoogleAssistant.ENDPOINT, 
+      API.ENDPOINT, 
       combined_creds
     ); 
   } 
 
-  public converse() {
+  public converse(callback: () => void) { 
     if(this.conversationState != null) {
       this.converseConfig.setConverseState(this.conversationState);
       this.conversationState = null; 
@@ -96,52 +74,71 @@ class GoogleAssistant {
     request.setConfig(this.converseConfig); 
     var meta = new grpc.Metadata();
 
-    var call = this.service.converse(meta, request);
-    call.on('data', this._handleConversationState)
+    this.channel = this.service.converse(meta, request);
+    this.channel.on('data', this._handleResponse)
+    this.channel.on('data', this._handleConversationState)
+    this.channel.write(request)
 
-    call.write(request)
+    this.converter.pipe(this.channel);
     this.state = State.IN_PROGRESS;
-    return call;
+
+    // Signal that assistant is ready
+    callback();
   }
 
-  private _handleConversationState(res: any) {
-    let response = res.toObject();
+  public write(data: Buffer | Array<number>) {
+    this.converter.write(data);
+  }
 
+  private _handleResponse(response: any) {
+    if(response.hasEventType() && 
+      response.getEventType() == Event.END_OF_UTTERANCE) {
+      this.emit('end-of-utterance');
+    }
+
+    else if(response.hasAudioOut()) {
+      this.emit('audio-data', response.getAudioData());
+    }
+
+    else if(response.hasResult()) {
+      this._handleResult(response.getResult());
+    }
+
+    else if(response.hasError()) { 
+      this.emit('error', response.getError());
+    }
+  }
+
+  private _handleResult(result: any) {
+    if(result.getMicrophoneMode()) {
+      this.emit('mic-mode', result.getMicrophoneMode());
+    }
+
+    else if(result.getConversationState()) {
+      this.emit('state', result.getConversationState());
+    }
+
+    else if(result.getSpokenResponseText()) {
+      this.emit('response-text', result.getSpokenResponseText());
+    }
+
+    else if(result.getSpokenRequestText()) {
+      this.emit('request-text', result.getSpokenRequestText());
+    }
+  }
+
+  private _handleConversationState(response: any) {
     // Handle end of user input
-    if(response.eventType == Event.END_OF_UTTERANCE) {
+    if(response.getEventType() == Event.END_OF_UTTERANCE) {
       this.state = State.FINISHED;
     }
 
     // Handle continous conversations
-    if(response.result && response.result.conversationState) {
+    if(response.hasResult() && response.getResult().getConversationState()) {
       let convState = new messages.ConverseState();
-      convState.setConversationState(response.result.conversationState);
+      convState.setConversationState(response.getResult().getConversationState());
       this.conversationState = convState;
     }
-  }
-
-  // Convert audio chunks to 16KB ConverseRequests
-  public createAudioConverter() {
-    return through2({ objectMode: true },
-      function(chunk: any, enc: string, cb: Function) {
-        var buff = Buffer.from(chunk)
-        var offset = 0;
-        var size = 1024 * 16;
-        for(var i = 0; i < chunk.length / size; i++) {
-          var nibble = buff.slice(offset, (offset + size));
-          offset += size;
-          var request = new messages.ConverseRequest(); 
-          request.setAudioIn(nibble);
-          this.push(request);
-        }
-
-        return cb(null);
-      }
-    )
-  }
-
-  public createLogger() {
-    return new GoogleAssistantLogger();
   }
 }
 

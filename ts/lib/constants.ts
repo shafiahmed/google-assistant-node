@@ -7,3 +7,7 @@ export enum State {
 export enum Event {
   END_OF_UTTERANCE = 1
 }
+
+export module API {
+  export const ENDPOINT = 'embeddedassistant.googleapis.com'
+}
