@@ -1,0 +1,5 @@
+*.sw[a-zA-Z0-9]
+node_modules
+.DS_Store
+build
+*.map
