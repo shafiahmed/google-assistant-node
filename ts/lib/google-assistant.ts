@@ -103,7 +103,9 @@ class GoogleAssistant extends events.EventEmitter {
     }
 
     else if(response.hasAudioOut()) {
-      this.emit('audio-data', response.getAudioData());
+      this.emit('audio-data', 
+        new Buffer(response.getAudioData())
+      );
     }
 
     else if(response.hasResult()) {
@@ -121,7 +123,9 @@ class GoogleAssistant extends events.EventEmitter {
     }
 
     else if(result.getConversationState()) {
-      this.emit('state', result.getConversationState());
+      this.emit('state', 
+        new Buffer(result.getConversationState())
+      );
     }
 
     else if(result.getSpokenResponseText()) {

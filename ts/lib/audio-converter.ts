@@ -10,6 +10,7 @@ class AudioConverter extends stream.Transform {
     var buff = Buffer.from(chunk)
     var offset = 0;
     var size = 1024 * 16;
+
     for(var i = 0; i < chunk.length / size; i++) {
       var nibble = buff.slice(offset, (offset + size));
       offset += size;
