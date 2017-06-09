@@ -50,11 +50,9 @@ assistant.on('error', (error) => {
   //  Error (error)
 });
 
-assistant.on('ready', () => {
+assistant.on('ready', (writeStream) => {
   // Assistant is ready to accept audio data
-  // NOTE: Does not implement stream.Writable. pipe() does not work.
-
-  assistant.write(audioData);
+  audioData.pipe(writeStream);
 });
 
 assistant.on('end', () => {
