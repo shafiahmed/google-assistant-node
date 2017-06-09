@@ -80,9 +80,9 @@ class GoogleAssistant extends events.EventEmitter {
     );
 
     // Setup event listeners
-    this.channel.on('data', this._handleResponse);
-    this.channel.on('data', this._handleConversationState);
-    this.channel.on('end', this._handleConversationEnd);
+    this.channel.on('data', this._handleResponse.bind(this));
+    this.channel.on('data', this._handleConversationState.bind(this));
+    this.channel.on('end', this._handleConversationEnd.bind(this));
 
     // Write first ConverseRequest
     this.channel.write(request)
