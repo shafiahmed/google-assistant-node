@@ -16,7 +16,7 @@ let encodings = constants.Encoding;
 
 let assistant = new GoogleAssistant({
   input: {
-    encoding: encodings.LINEAR_16,
+    encoding: encodings.LINEAR16,
     sampleRateHertz: 16000
   },
   output: {
