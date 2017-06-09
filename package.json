@@ -6,9 +6,10 @@
   "scripts": {
     "clean": "./node_modules/gulp/bin/gulp.js clean",
     "build": "tsc",
-    "build:test": "./node_modules/gulp/bin/gulp.js",
-    "build:live": "./node_modules/gulp/bin/gulp.js watch",
-    "test": "npm run build:test && ./node_modules/mocha/bin/mocha build/test"
+    "build:test": "gulp",
+    "build:live": "gulp watch",
+    "test": "npm run build:test && mocha build/test",
+    "prepublish": "npm run build"
   },
   "keywords": [
     "google-assistant",

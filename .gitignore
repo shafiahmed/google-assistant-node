@@ -1,5 +1,11 @@
 *.sw[a-zA-Z0-9]
+*.map
+*.tgz
 node_modules
 .DS_Store
 build
-*.map
+lib
+test
+**/*.js
+**/*.js.map
+
