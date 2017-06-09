@@ -95,6 +95,26 @@ class GoogleAssistant extends events.EventEmitter {
     this.emit('ready', this.converter);
   }
 
+  private _handleResult(result: any) {
+    if(result.getMicrophoneMode()) {
+      this.emit('mic-mode', result.getMicrophoneMode());
+    }
+
+    else if(result.getConversationState()) {
+      this.emit('state', 
+        new Buffer(result.getConversationState())
+      );
+    }
+
+    else if(result.getSpokenResponseText()) {
+      this.emit('response-text', result.getSpokenResponseText());
+    }
+
+    else if(result.getSpokenRequestText()) {
+      this.emit('request-text', result.getSpokenRequestText());
+    }
+  }
+
   private _handleResponse(response: any) {
     if(response.hasEventType() && 
       response.getEventType() == Event.END_OF_UTTERANCE) {
@@ -113,26 +133,6 @@ class GoogleAssistant extends events.EventEmitter {
 
     else if(response.hasError()) { 
       this.emit('error', response.getError());
-    }
-  }
-
-  private _handleResult(result: any) {
-    if(result.getMicrophoneMode()) {
-      this.emit('mic-mode', result.getMicrophoneMode());
-    }
-
-    else if(result.getConversationState()) {
-      this.emit('state', 
-        new Buffer(result.getConversationState())
-      );
-    }
-
-    else if(result.getSpokenResponseText()) {
-      this.emit('response-text', result.getSpokenResponseText());
-    }
-
-    else if(result.getSpokenRequestText()) {
-      this.emit('request-text', result.getSpokenRequestText());
     }
   }
 
