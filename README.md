@@ -62,8 +62,10 @@ assistant.on('end', () => {
 }
 
 // Use Google OAuth Client to authenticate: 
-// https://github.com/google/google-auth-library-nodejs
-assistant.auth(authClient);
+// https://github.com/google/google-auth-library-nodejs 
+// or
+// https://github.com/google/google-api-nodejs-client
+assistant.authenticate(authClient);
 
 // Start conversation
 assistant.converse();

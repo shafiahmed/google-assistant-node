@@ -20,6 +20,7 @@
   "author": "Alan Wernick",
   "license": "ISC",
   "dependencies": {
+    "google-protobuf": "^3.3.0",
     "grpc": "^1.3.8"
   },
   "devDependencies": {
