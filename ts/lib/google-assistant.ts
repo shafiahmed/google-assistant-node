@@ -92,11 +92,7 @@ class GoogleAssistant extends events.EventEmitter {
     this.converter.pipe(this.channel);
 
     // Signal that assistant is ready
-    this.emit('ready');
-  }
-
-  public write(data: Buffer | Array<number>) {
-    this.converter.write(data);
+    this.emit('ready', this.converter);
   }
 
   private _handleResponse(response: any) {
