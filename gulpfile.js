@@ -3,7 +3,7 @@ let clean = require('gulp-clean');
 let ts = require('gulp-typescript');
 
 // Directories
-let sources = ["ts/lib/**/*"]
+let sources = ["ts/**/*"]
 let outputDir = 'build';
 let tsConfig = 'tsconfig.json';
 let tsProject = ts.createProject(tsConfig);
@@ -15,7 +15,7 @@ gulp.task('compile', function() {
 });
 
 gulp.task('watch', function() {
-  gulp.watch(sources, ['compile']);
+  gulp.watch(sources, ['clean', 'compile']);
 })
 
 gulp.task('clean', function() {
@@ -23,4 +23,4 @@ gulp.task('clean', function() {
     .pipe(clean());
 })
 
-gulp.task('default', ['compile']);
+gulp.task('default', ['clean', 'compile']);

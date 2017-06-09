@@ -12,11 +12,11 @@ npm install google-assistant-node
 ```js
 let GoogleAssistant = require('google-assistant-node');
 let constants = GoogleAssistant.Constants;
-let encodings = constants.Encodings;
+let encodings = constants.Encoding;
 
 let assistant = new GoogleAssistant({
   input: {
-    encoding: encodings.LINEAR_16,
+    encoding: encodings.LINEAR16,
     sampleRateHertz: 16000
   },
   output: {
@@ -62,8 +62,10 @@ assistant.on('end', () => {
 }
 
 // Use Google OAuth Client to authenticate: 
-// https://github.com/google/google-auth-library-nodejs
-assistant.auth(authClient);
+// https://github.com/google/google-auth-library-nodejs 
+// or
+// https://github.com/google/google-api-nodejs-client
+assistant.authenticate(authClient);
 
 // Start conversation
 assistant.converse();

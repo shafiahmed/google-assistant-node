@@ -1,8 +1,9 @@
 import * as events from "events";
 import * as stream from "stream";
+import * as constants from "./constants";
+import  AudioConverter from "./audio-converter";
 import { State, Event, API } from "./constants";
 import { AudioInOptions , AudioOutOptions }  from "./options";
-import  AudioConverter from "./audio-converter";
 import { 
   ConverseConfig, AudioInConfig, AudioOutConfig, AssistantConfig 
 } from "./config";
@@ -13,6 +14,8 @@ let messages = require('./googleapis/google/assistant/embedded/v1alpha1/embedded
 let services = require('./googleapis/google/assistant/embedded/v1alpha1/embedded_assistant_grpc_pb');
 
 class GoogleAssistant extends events.EventEmitter {
+  static Constants = constants;
+
   private state: State
   private service: any   // gRPC Service
   private channel: any   // gRPC Duplex Channel
@@ -103,7 +106,9 @@ class GoogleAssistant extends events.EventEmitter {
     }
 
     else if(response.hasAudioOut()) {
-      this.emit('audio-data', response.getAudioData());
+      this.emit('audio-data', 
+        new Buffer(response.getAudioData())
+      );
     }
 
     else if(response.hasResult()) {
@@ -121,7 +126,9 @@ class GoogleAssistant extends events.EventEmitter {
     }
 
     else if(result.getConversationState()) {
-      this.emit('state', result.getConversationState());
+      this.emit('state', 
+        new Buffer(result.getConversationState())
+      );
     }
 
     else if(result.getSpokenResponseText()) {
@@ -152,4 +159,4 @@ class GoogleAssistant extends events.EventEmitter {
   }
 }
 
-export default GoogleAssistant;
+export = GoogleAssistant;
