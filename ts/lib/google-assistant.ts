@@ -123,7 +123,7 @@ class GoogleAssistant extends events.EventEmitter {
 
     else if(response.hasAudioOut()) {
       this.emit('audio-data', 
-        new Buffer(response.getAudioData())
+        new Buffer(response.getAudioOut().getAudioData())
       );
     }
 
