@@ -3,9 +3,9 @@
 *.tgz
 node_modules
 .DS_Store
-build
-lib
-test
+/build
+/lib
+/test
 **/*.js
 **/*.js.map
 

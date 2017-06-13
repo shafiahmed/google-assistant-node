@@ -75,6 +75,7 @@ class GoogleAssistant extends events.EventEmitter {
 
     let request = new messages.ConverseRequest(); 
     request.setConfig(this.converseConfig); 
+
     this.channel = this.service.converse(
       new grpc.Metadata(), request
     );
@@ -82,24 +83,32 @@ class GoogleAssistant extends events.EventEmitter {
     // Setup event listeners
     this.channel.on('data', this._handleResponse.bind(this));
     this.channel.on('data', this._handleConversationState.bind(this));
+    this.channel.on('error', this._handleError.bind(this));
     this.channel.on('end', this._handleConversationEnd.bind(this));
 
     // Write first ConverseRequest
     this.channel.write(request)
     this.state = State.IN_PROGRESS;
 
-    // Setup conversion stream
-    this.converter.pipe(this.channel);
+    // Wait for any errors to emerge before piping
+    // audio data
+    setTimeout(() => {
+      if(this.channel != null) {
+        // Setup conversion stream
+        this.converter
+          .pipe(this.channel)
+          .on('error', this._handleError.bind(this));
 
-    // Signal that assistant is ready
-    this.emit('ready', this.converter);
+        // Signal that assistant is ready
+        this.emit('ready', this.converter);
+      }
+    }, 1000);
   }
 
   private _handleResult(result: any) {
     if(result.getMicrophoneMode()) {
       this.emit('mic-mode', result.getMicrophoneMode());
-    }
-
+    } 
     else if(result.getConversationState()) {
       this.emit('state', 
         new Buffer(result.getConversationState())
@@ -150,8 +159,14 @@ class GoogleAssistant extends events.EventEmitter {
     }
   }
 
-  public _handleConversationEnd(error?: Error) {
-    this.emit('end', error);
+  public _handleConversationEnd() {
+    this.emit('end');
+  }
+
+  public _handleError(error: Error) {
+    this.channel.end();
+    this.channel = null;
+    this.emit('error', error);
   }
 }
 
