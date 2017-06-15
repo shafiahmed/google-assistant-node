@@ -98,8 +98,7 @@ class GoogleAssistant extends events.EventEmitter {
         this.converter
           .pipe(this.channel)
           .on('error', this._handleError.bind(this));
-
-        // Signal that assistant is ready
+// Signal that assistant is ready
         this.emit('ready', this.converter);
       }
     }, 1000);
@@ -163,10 +162,15 @@ class GoogleAssistant extends events.EventEmitter {
     this.emit('end');
   }
 
-  public _handleError(error: Error) {
+  public _handleError(error: any) {
     this.channel.end();
     this.channel = null;
-    this.emit('error', error);
+
+    if(error.code && error.code == grpc.status.UNAUTHENTICATED) {
+      this.emit('unauthorized', error);
+    } else {
+      this.emit('error', error);
+    }
   }
 }
 
