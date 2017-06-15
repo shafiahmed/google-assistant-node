@@ -46,6 +46,11 @@ assistant.on('mic-mode', (mode) => {
   //  Microphone Mode (int)
 });
 
+assistant.on('unauthorized', (error) => {
+  // Authorization error (error)
+  // E.g. Did not authenticate with OAuth client
+})
+
 assistant.on('error', (error) => {
   //  Error (error)
 });
