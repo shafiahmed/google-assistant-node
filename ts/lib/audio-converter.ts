@@ -5,7 +5,7 @@ class AudioConverter extends stream.Transform {
   constructor() {
     super({ objectMode: true });
   }
-
+  
   _transform(chunk: any, enc: string, cb: (err?: Error) => void) {
     var buff = Buffer.from(chunk)
     var offset = 0;
