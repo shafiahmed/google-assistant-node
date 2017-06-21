@@ -98,27 +98,29 @@ class GoogleAssistant extends events.EventEmitter {
         this.converter
           .pipe(this.channel)
           .on('error', this._handleError.bind(this));
-// Signal that assistant is ready
+
+        // Signal that assistant is ready
         this.emit('ready', this.converter);
       }
-    }, 1000);
+    }, 100);
   }
 
   private _handleResult(result: any) {
     if(result.getMicrophoneMode()) {
       this.emit('mic-mode', result.getMicrophoneMode());
     } 
-    else if(result.getConversationState()) {
+
+    if(result.getConversationState()) {
       this.emit('state', 
         new Buffer(result.getConversationState())
       );
     }
 
-    else if(result.getSpokenResponseText()) {
+    if(result.getSpokenResponseText()) {
       this.emit('response-text', result.getSpokenResponseText());
     }
 
-    else if(result.getSpokenRequestText()) {
+    if(result.getSpokenRequestText()) {
       this.emit('request-text', result.getSpokenRequestText());
     }
   }
@@ -163,8 +165,10 @@ class GoogleAssistant extends events.EventEmitter {
   }
 
   public _handleError(error: any) {
-    this.channel.end();
-    this.channel = null;
+    if(this.channel != null) {
+      this.channel.end();
+      this.channel = null;
+    }
 
     if(error.code && error.code == grpc.status.UNAUTHENTICATED) {
       this.emit('unauthorized', error);
