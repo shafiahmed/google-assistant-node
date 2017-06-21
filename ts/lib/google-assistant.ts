@@ -9,7 +9,6 @@ import {
 } from "./config";
 
 let grpc = require('grpc');
-let through2 = require('through2');
 let messages = require('./googleapis/google/assistant/embedded/v1alpha1/embedded_assistant_pb');
 let services = require('./googleapis/google/assistant/embedded/v1alpha1/embedded_assistant_grpc_pb');
 
