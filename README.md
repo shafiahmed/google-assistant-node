@@ -26,43 +26,62 @@ let assistant = new GoogleAssistant({
   }
 });
 
+// Audio Data (bytes)
 assistant.on('audio-data', (data) => {
-  // Audio Data (bytes)
 });
 
+//  Reponse Text (string)
 assistant.on('response-text', (text) => {
-  //  Reponse Text (string)
 });
 
+//  Request Text (string)
 assistant.on('request-text', (text) => {
-  //  Request Text (string)
 });
 
+//  Conversation State (bytes)
 assistant.on('state', (state) => {
-  //  Conversation State (bytes)
 });
 
+//  Microphone Mode (int)
 assistant.on('mic-mode', (mode) => {
-  //  Microphone Mode (int)
 });
 
+// Authorization error (error)
+// E.g. Did not authenticate with OAuth client
 assistant.on('unauthorized', (error) => {
-  // Authorization error (error)
-  // E.g. Did not authenticate with OAuth client
 })
 
+//  Error (error)
 assistant.on('error', (error) => {
-  //  Error (error)
 });
 
-assistant.on('ready', (writeStream) => {
-  // Assistant is ready to accept audio data
-  audioData.pipe(writeStream);
+// Assistant is ready to accept audio data. NOTE: .once() is used.
+assistant.once('ready', (wstream) => {
+  audioData.pipe(wstream);
 });
 
-assistant.on('end', () => {
-  // Conversation is over. 
+// Current conversation is over. 
+// NOTE: 'end' will be called even if there is a 'follow-on' event.
+assistant.once('end', () => {
 }
+
+// Assistant is expecting a follow-on response from user.
+assistant.on('follow-on', () => {
+  
+  // Setup follow-on 'ready' and 'end' event handler to change audio source
+  // if desired (or if you used .once()).
+  assistant.once('ready', (wstream) => { 
+    moreAudioData.pipe(wstream)
+  }
+  
+  // Handle follow-on conversation end.
+  assistant.once('end', () => {
+    moreAudioData.end();
+  }) 
+
+  // Don't forget to call .converse() to resume conversation
+  assistant.converse();
+})
 
 // Use Google OAuth Client to authenticate: 
 // https://github.com/google/google-auth-library-nodejs 

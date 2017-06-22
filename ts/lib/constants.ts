@@ -7,6 +7,11 @@ export enum Event {
   END_OF_UTTERANCE = 1
 }
 
+export enum MicMode {
+  CLOSE_MICROPHONE = 1,
+  DIALOG_FOLLOW_ON = 2
+}
+
 export enum Encoding {
   LINEAR16      = 1,
   FLAC          = 2, // Input

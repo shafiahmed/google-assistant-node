@@ -2,7 +2,7 @@ import * as events from "events";
 import * as stream from "stream";
 import * as constants from "./constants";
 import  AudioConverter from "./audio-converter";
-import { State, Event, API } from "./constants";
+import { State, Event, API, MicMode } from "./constants";
 import { AudioInOptions , AudioOutOptions }  from "./options";
 import { 
   ConverseConfig, AudioInConfig, AudioOutConfig, AssistantConfig 
@@ -67,7 +67,7 @@ class GoogleAssistant extends events.EventEmitter {
   } 
 
   public converse() { 
-    if(this.conversationState != null) {
+    if(this.state == State.IN_PROGRESS && this.conversationState != null) {
       this.converseConfig.setConverseState(this.conversationState);
       this.conversationState = null; 
     } 
@@ -146,21 +146,39 @@ class GoogleAssistant extends events.EventEmitter {
   }
 
   private _handleConversationState(response: any) {
-    // Handle end of user input
-    if(response.getEventType() == Event.END_OF_UTTERANCE) {
-      this.state = State.FINISHED;
-    }
+    // Process state-specific results
+    if(response.hasResult()) {
+      let result = response.getResult(); 
 
-    // Handle continous conversations
-    if(response.hasResult() && response.getResult().getConversationState()) {
-      let convState = new messages.ConverseState();
-      convState.setConversationState(response.getResult().getConversationState());
-      this.conversationState = convState;
+      // Determine state based on microphone mode.
+      if(result.getMicrophoneMode()) {
+        let micMode = result.getMicrophoneMode();
+
+        // Keep state, and expect more input
+        if(micMode == MicMode.DIALOG_FOLLOW_ON) {
+          this.state = State.IN_PROGRESS;
+        } 
+        
+        // Conversation is over, wait for output to finish streaming
+        else if(micMode == MicMode.CLOSE_MICROPHONE) {
+          this.state = State.FINISHED;
+        }
+      }
+
+      // Handle continous conversations
+      if(result.getConversationState()) {
+        let convState = new messages.ConverseState();
+        convState.setConversationState(result.getConversationState());
+        this.conversationState = convState;
+      }
     }
   }
 
   public _handleConversationEnd() {
     this.emit('end');
+    if(this.state == State.IN_PROGRESS) {
+      this.emit('follow-on');
+    }
   }
 
   public _handleError(error: any) {
