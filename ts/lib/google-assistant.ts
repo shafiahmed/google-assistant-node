@@ -75,6 +75,12 @@ class GoogleAssistant extends events.EventEmitter {
     let request = new messages.ConverseRequest(); 
     request.setConfig(this.converseConfig); 
 
+    // GUARD: Make sure service is created and authenticated
+    if(this.service == null) {
+      this.emit('unauthorized');
+      return;
+    }
+
     this.channel = this.service.converse(
       new grpc.Metadata(), request
     );
