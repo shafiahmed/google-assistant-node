@@ -1,4 +1,8 @@
 import { assert } from "chai";
+import * as chai from "chai";
+chai.use(require("chai-events"));
+
+let should = chai.should();
 let GoogleAssistant = require('../lib/google-assistant');
 let constants = GoogleAssistant.Constants;
 let encoding = constants.Encoding;
@@ -53,7 +57,15 @@ describe('GoogleAssistant', function() {
   })
 
   describe('.authenticate', function() {
+    let assistant: any = null;
+    beforeEach(function() {
+      assistant = buildAssistant();
+    })
+
     it('should error on null authClient', function() {
+      let p = assistant.should.emit("unauthorized");
+      assistant.converse();
+      return p;
     })
   })
 
